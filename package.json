@@ -1,0 +1,21 @@
+{
+    "name": "krasula",
+    "description": "IRC bot for #aviarypl",
+    "version": "0.1.0",
+    "author": {
+        "name": "Stas Malolepszy",
+        "email": "stas@mozilla.com",
+        "url": "http://stasm.name"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/stasm/krasula.git"
+    },
+    "dependencies": {
+        "nomnom": ">=0.4.2",
+        "irc": ">=0.2.0"
+    },
+    "bin": {
+        "krasula": "./krasula.js"
+    }
+}
