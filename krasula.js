@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 
-var https = require('https'),
-    irc = require('irc'),
-    qs = require('querystring'),
-    options = require('nomnom').opts({
+var irc = require('irc');
+var bz = require('bz');
+
+var bmo = bz.createClient();
+
+var BMO_RE = /bug (\d{1,7})/g;
+var BAP_RE = /bap (\d{1,5})/g;
+
+var options = require('nomnom').opts({
         host: {
             abbr: 'H',
             help: 'IRC network to connect to.'
@@ -18,7 +23,6 @@ var https = require('https'),
             help: 'Channels to join. Comma-separated, no #.'
         }
     }).parseArgs();
-
 
 var channels = options.channels.split(',');
 for (var i = 0; i < channels.length; i++) {
@@ -39,8 +43,20 @@ client.addListener('pm', function(from, msg) {
 });
 
 client.addListener('message', function (from, to, msg) {
-    console.log(from + ' => ' + to + ': ' + msg);
-    var parts = msg.trim().split(/\s+/);
+    msg = msg.trim();
+    var results;
+    while (results = BMO_RE.exec(msg)) {
+        console.log(results);
+        var bugid = results[1];
+        bmo.getBug(bugid, function(error, bug) {
+            if (error) {
+                console.log(error);
+                return;
+            }
+            client.say(to, from + ': http://bugzil.la/' + bug.id + ' - ' + bug.summary);
+        });
+    }
+    var parts = msg.split(/\s+/);
     if (parts.shift() != 'krasula:') return;
     client.say(to, from + ': ' + parts.join(' '));
 });
