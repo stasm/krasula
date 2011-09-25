@@ -46,14 +46,17 @@ client.addListener('message', function (from, to, msg) {
     msg = msg.trim();
     var results;
     while (results = BMO_RE.exec(msg)) {
-        console.log(results);
         var bugid = results[1];
         bmo.getBug(bugid, function(error, bug) {
             if (error) {
                 console.log(error);
                 return;
             }
-            client.say(to, from + ': http://bugzil.la/' + bug.id + ' - ' + bug.summary);
+            var status = bug.status;
+            if (status == 'RESOLVED')
+                status += ' ' + bug.resolution;
+            client.say(to, from + ': http://bugzil.la/' + bug.id + 
+                       ' - ' + bug.summary + ' - ' + status);
         });
     }
     var parts = msg.split(/\s+/);
