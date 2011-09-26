@@ -44,9 +44,12 @@ bot.addListener('message', function (from, to, msg) {
     var BMO_RE = /bug (\d{1,7})/g;
     var BAP_RE = /bap (\d{1,5})/g;
 
+    var uniques = [];
     var results;
     while (results = BMO_RE.exec(msg)) {
         var bugid = results[1];
+        if (uniques.indexOf(bugid) > -1) continue;
+        uniques.push(bugid);
         bmo.getBug(bugid, function(error, bug) {
             if (error) {
                 console.log(error);
@@ -65,14 +68,23 @@ bot.addListener('message', function (from, to, msg) {
 bot.addListener('message', function (from, to, msg) {
     var INCR = /(\w+)\+\+/g;
     var DECR = /(\w+)\-\-/g;
+    var uniques = [];
+
+    if (to == 'krasula') return;
 
     while (results = INCR.exec(msg)) {
         var who = results[1];
+        if (who == from) continue;
+        if (uniques.indexOf(who) > -1) continue;
+        uniques.push(who);
         console.log(who + '++');
         store.incr('karma_' + who);
     }
     while (results = DECR.exec(msg)) {
         var who = results[1];
+        if (who == from) continue;
+        if (uniques.indexOf(who) > -1) continue;
+        uniques.push(who);
         console.log(who + '--');
         store.decr('karma_' + who);
     }
