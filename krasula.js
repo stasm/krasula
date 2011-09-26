@@ -96,6 +96,8 @@ bot.addListener('message', function (from, to, msg) {
     if (parts.shift() != 'karma') return;
     var who = parts.shift();
     store.get('karma_' + who, function(err, res) {
+        if ( !res)
+            res = 0;
         bot.say(to, who + ' has ' + res + ' karma');
     });
 });
