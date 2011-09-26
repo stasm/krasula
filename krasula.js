@@ -79,11 +79,34 @@ bot.addListener('message', function (from, to, msg) {
 });
 
 bot.addListener('message', function (from, to, msg) {
-    var parts = msg.split(/\s+/);
+    var parts = msg.trim().split(/\s+/);
     if (parts.shift() != 'krasula:') return;
     if (parts.shift() != 'karma') return;
     var who = parts.shift();
     store.get('karma_' + who, function(err, res) {
         bot.say(to, who + ' has ' + res + ' karma');
     });
+});
+
+bot.addListener('part', function (channel, who, reason) {
+    console.log(who + ' has left');
+    store.set('part_' + who, Date.now());
+});
+
+bot.addListener('message', function (from, to, msg) {
+    var parts = msg.trim().split(/\s+/);
+    if (parts.shift() != 'krasula:') return;
+    if (parts.shift() != 'part') return;
+    var who = parts.shift();
+    store.get('part_' + who, function(err, res) {
+        var when = new Date(parseInt(res));
+        bot.say(to, who + ' has left on ' + when.toString());
+    });
+});
+
+bot.addListener('message', function (from, to, msg) {
+    var parts = msg.trim().split(/\s+/);
+    if (parts.shift() != 'krasula:') return;
+    if (parts.shift() != 'zdrowie') return;
+    bot.say(to, from + ': pijmy bo się ściemnia. Zdrowie!');
 });
