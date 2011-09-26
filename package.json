@@ -16,6 +16,7 @@
         "irc": ">=0.2.0"
         "bz": ">=0.2.2"
         "request": ">=2.1.1"
+        "redis": ">=0.6.7"
     },
     "bin": {
         "krasula": "./krasula.js"
