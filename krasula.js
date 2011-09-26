@@ -53,7 +53,8 @@ bot.addListener('message', function (from, to, msg) {
                 return;
             }
             var status = bug.status;
-            if (status == 'RESOLVED')
+            if (status == 'RESOLVED' ||
+                status == 'VERIFIED')
                 status += ' ' + bug.resolution;
             bot.say(to, from + ': http://bugzil.la/' + bug.id + 
                        ' - ' + bug.summary + ' - ' + status);
