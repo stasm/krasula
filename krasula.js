@@ -40,7 +40,17 @@ bot.addListener('error', function(err) {
     if (err.rawCommand != '421') console.log(err);
 });
 
-bot.addListener('message', function (from, to, msg) {
+bot.addListener('quit', function (channel, who, reason) {
+    console.log(who + ' has left');
+    store.set('quit_' + who, Date.now());
+});
+
+bot.addListener('part', function (channel, who, reason) {
+    console.log(who + ' has left');
+    store.set('quit_' + who, Date.now());
+});
+
+bot.addListener('message', function (from, channel, msg) {
     var BMO_RE = /bug (\d{1,7})/g;
     var BAP_RE = /bap (\d{1,5})/g;
 
@@ -59,19 +69,20 @@ bot.addListener('message', function (from, to, msg) {
             if (status == 'RESOLVED' ||
                 status == 'VERIFIED')
                 status += ' ' + bug.resolution;
-            bot.say(to, from + ': http://bugzil.la/' + bug.id + 
-                       ' - ' + bug.summary + ' - ' + status);
+            bot.say(channel, from + ': http://bugzil.la/' + bug.id + 
+                    ' - ' + bug.summary + ' - ' + status);
         });
     }
 });
 
-bot.addListener('message', function (from, to, msg) {
+bot.addListener('message', function (from, channel, msg) {
     var INCR = /(\w+)\+\+/g;
     var DECR = /(\w+)\-\-/g;
     var uniques = [];
 
-    if (to == 'krasula') return;
+    if (channel == 'krasula') return;
 
+    var results;
     while (results = INCR.exec(msg)) {
         var who = results[1];
         if (who == from) continue;
@@ -90,7 +101,7 @@ bot.addListener('message', function (from, to, msg) {
     }
 });
 
-bot.addListener('message', function (from, to, msg) {
+bot.addListener('message', function (from, channel, msg) {
     var parts = msg.trim().split(/\s+/);
     if (parts.shift() != 'krasula:') return;
     if (parts.shift() != 'karma') return;
@@ -98,29 +109,24 @@ bot.addListener('message', function (from, to, msg) {
     store.get('karma_' + who, function(err, res) {
         if ( !res)
             res = 0;
-        bot.say(to, who + ' has ' + res + ' karma');
+        bot.say(channel, who + ' has ' + res + ' karma');
     });
 });
 
-bot.addListener('part', function (channel, who, reason) {
-    console.log(who + ' has left');
-    store.set('part_' + who, Date.now());
-});
-
-bot.addListener('message', function (from, to, msg) {
+bot.addListener('message', function (from, channel, msg) {
     var parts = msg.trim().split(/\s+/);
     if (parts.shift() != 'krasula:') return;
-    if (parts.shift() != 'part') return;
+    if (parts.shift() != 'seen') return;
     var who = parts.shift();
-    store.get('part_' + who, function(err, res) {
+    store.get('quit_' + who, function(err, res) {
         var when = new Date(parseInt(res));
-        bot.say(to, who + ' has left on ' + when.toString());
+        bot.say(channel, who + ' has left on ' + when.toString());
     });
 });
 
-bot.addListener('message', function (from, to, msg) {
+bot.addListener('message', function (from, channel, msg) {
     var parts = msg.trim().split(/\s+/);
     if (parts.shift() != 'krasula:') return;
     if (parts.shift() != 'zdrowie') return;
-    bot.say(to, from + ': pijmy bo się ściemnia. Zdrowie!');
+    bot.say(channel, from + ': pijmy bo się ściemnia. Zdrowie!');
 });
