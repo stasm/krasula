@@ -158,7 +158,7 @@ bot.addListener('message', function (from, channel, msg) {
 
     var parts = msg.trim().split(/\s+/);
     if (parts.shift() != options.nick + ':') return;
-    if (parts.shift() != 'karma') return;
+    if (parts.shift() != 'mleko') return;
     var who = parts.shift();
     store.get('karma_' + who, function(err, res) {
         if (!res) {
