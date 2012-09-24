@@ -27,10 +27,17 @@ for (var i = 0; i < channels.length; i++) {
 }
 
 var bmo = bz.createClient();
+<<<<<<< .mine
 var bap = bz.createClient({ 
     url: "http://bugs.aviary.pl/xmlrpc.cgi"
 });
 var store = redis.createClient(8888);
+=======
+var bap = bz.createClient({
+    url: "https://api-dev.bugzilla.mozilla.org/test/0.9/"
+});
+var store = redis.createClient();
+>>>>>>> .theirs
 var bot = new irc.Client(options.host, options.nick, {
     'channels': channels,
 });
