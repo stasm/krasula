@@ -1,8 +1,23 @@
 #!/usr/bin/env node
 
 var irc = require('irc');
-var bz = require('bz-json');
+var bz = require('bz');
+var bzJson = require('bz-json');
 var redis = require('redis');
+
+var getPolishForm = function(number, str0, str1, str2) {
+    if (number == 1) {
+        return str1;
+    }
+
+    var numberd = number % 10;
+    var numbers = number % 100;
+    if ((numberd <= 1) || (numberd > 4) || (numbers > 10 && numbers < 20)) {
+        return str0;
+    }
+
+    return str2; 
+}
 
 var options = require('nomnom').opts({
         host: {
@@ -17,6 +32,11 @@ var options = require('nomnom').opts({
         channels: {
             abbr: 'c',
             help: 'Channels to join. Comma-separated, no #.'
+        },
+        redisport: {
+            abbr: 'r',
+            default: 6379,
+            help: 'Redis port number.'
         }
     }).parseArgs();
 
@@ -27,19 +47,17 @@ for (var i = 0; i < channels.length; i++) {
 }
 
 var bmo = bz.createClient();
-<<<<<<< .mine
-var bap = bz.createClient({ 
-    url: "http://bugs.aviary.pl/xmlrpc.cgi"
+var bap = bzJson.createClient({ 
+    url: "http://bugs.aviary.pl/jsonrpc.cgi"
 });
-var store = redis.createClient(8888);
-=======
-var bap = bz.createClient({
-    url: "https://api-dev.bugzilla.mozilla.org/test/0.9/"
-});
-var store = redis.createClient();
->>>>>>> .theirs
+var store = redis.createClient(options.redisport);
+
+console.log('Connecting...');
 var bot = new irc.Client(options.host, options.nick, {
     'channels': channels,
+});
+bot.on('join', function() {
+    console.log('Connected!');
 });
 
 store.on("error", function (err) {
@@ -61,37 +79,40 @@ bot.addListener('part', function (channel, who, reason) {
 });
 
 bot.addListener('message', function (from, channel, msg) {
-    var BMO_RE = /bug (\d{1,7})/g;
-    var BAP_RE = /bap (\d{1,5})/g;
+    var BMO_RE = /(?:bug|bmo) (.*)/g;
+    var BAP_RE = /bap (.*)/g;
 
     var uniques = [];
     var results;
     while (results = BMO_RE.exec(msg)) {
-        var bugid = results[1];
+        var bugid = results[1].trim();
         if (uniques.indexOf(bugid) > -1) continue;
         uniques.push(bugid);
         bmo.getBug(bugid, function(error, bug) {
             if (error) {
                 console.log(error);
+                bot.say(channel, from + ': Nie znaleziono błędu o numerze ' + bugid +' na bmo');
                 return;
             }
             var status = bug.status;
             if (status == 'RESOLVED' ||
                 status == 'VERIFIED')
                 status += ' ' + bug.resolution;
-            bot.say(channel, from + ': http://bugzil.la/' + bug.id + 
+            bot.say(channel, from + ': https://bugzil.la/' + bug.id + 
                     ' - ' + bug.summary + ' - ' + status);
         });
     }
     while (results = BAP_RE.exec(msg)) {
-        var bugid = results[1];
+        var bugid = results[1].trim();
         if (uniques.indexOf(bugid) > -1) continue;
         uniques.push(bugid);
         bap.getBug(bugid, function(error, bug) {
             if (error) {
                 console.log(error);
+                bot.say(channel, from + ': Nie znaleziono błędu o numerze ' + bugid +' na bap');
                 return;
             }
+            var bug = bug.result.bugs[0]
             var status = bug.status;
             if (status == 'RESOLVED' ||
                 status == 'VERIFIED')
@@ -107,7 +128,7 @@ bot.addListener('message', function (from, channel, msg) {
     var DECR = /(\w+)\-\-/g;
     var uniques = [];
 
-    if (channel == 'krasula') return;
+    if (channel == options.nick) return;
 
     var results;
     while (results = INCR.exec(msg)) {
@@ -130,19 +151,33 @@ bot.addListener('message', function (from, channel, msg) {
 
 bot.addListener('message', function (from, channel, msg) {
     var parts = msg.trim().split(/\s+/);
-    if (parts.shift() != 'krasula:') return;
+    if (parts.shift() != options.nick + ':') return;
     if (parts.shift() != 'karma') return;
     var who = parts.shift();
     store.get('karma_' + who, function(err, res) {
-        if ( !res)
+        if (!res) {
             res = 0;
-        bot.say(channel, who + ' has ' + res + ' karma');
+        }
+        var msg;
+        if (res == 0) {
+            msg = who + ' nie ma jeszcze mleka';
+        }
+        else if (res < 0) {
+            res = res * (-1);
+            var karma = getPolishForm(res, 'litrów mleka', 'litr mleka', 'litry mleka');
+            msg = who + ' wisi ' + res + ' ' + karma;
+        }
+        else {
+            var karma = getPolishForm(res, 'litrów mleka', 'litr mleka', 'litry mleka');
+            msg = who + ' ma ' + res + ' ' + karma;
+        }
+        bot.say(channel, msg);
     });
 });
 
 bot.addListener('message', function (from, channel, msg) {
     var parts = msg.trim().split(/\s+/);
-    if (parts.shift() != 'krasula:') return;
+    if (parts.shift() != options.nick + ':') return;
     if (parts.shift() != 'seen') return;
     var who = parts.shift();
     store.get('quit_' + who, function(err, res) {
@@ -153,7 +188,7 @@ bot.addListener('message', function (from, channel, msg) {
 
 bot.addListener('message', function (from, channel, msg) {
     var parts = msg.trim().split(/\s+/);
-    if (parts.shift() != 'krasula:') return;
+    if (parts.shift() != options.nick + ':') return;
     if (parts.shift() != 'zdrowie') return;
     bot.say(channel, from + ': pijmy bo się ściemnia. Zdrowie!');
 });
