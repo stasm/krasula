@@ -56,8 +56,10 @@ console.log('Connecting...');
 var bot = new irc.Client(options.host, options.nick, {
     'channels': channels,
 });
-bot.on('join', function() {
-    console.log('Connected!');
+bot.on('join', function(channel, nick) {
+    if (nick == options.nick) {
+        console.log('Connected!');
+    }
 });
 
 store.on("error", function (err) {
