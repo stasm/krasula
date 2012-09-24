@@ -81,13 +81,15 @@ bot.addListener('part', function (channel, who, reason) {
 });
 
 bot.addListener('message', function (from, channel, msg) {
-    var BMO_RE = /(?:bug|bmo) (.*)/g;
-    var BAP_RE = /bap (.*)/g;
+    if (channel == options.nick) return;
+
+    var BMO_RE = /(?:bug|bmo) (\d{1,7})/g;
+    var BAP_RE = /bap (\d{1,5})/g;
 
     var uniques = [];
     var results;
     while (results = BMO_RE.exec(msg)) {
-        var bugid = results[1].trim();
+        var bugid = results[1];
         if (uniques.indexOf(bugid) > -1) continue;
         uniques.push(bugid);
         bmo.getBug(bugid, function(error, bug) {
@@ -105,7 +107,7 @@ bot.addListener('message', function (from, channel, msg) {
         });
     }
     while (results = BAP_RE.exec(msg)) {
-        var bugid = results[1].trim();
+        var bugid = results[1];
         if (uniques.indexOf(bugid) > -1) continue;
         uniques.push(bugid);
         bap.getBug(bugid, function(error, bug) {
@@ -126,11 +128,11 @@ bot.addListener('message', function (from, channel, msg) {
 });
 
 bot.addListener('message', function (from, channel, msg) {
+    if (channel == options.nick) return;
+
     var INCR = /(\w+)\+\+/g;
     var DECR = /(\w+)\-\-/g;
     var uniques = [];
-
-    if (channel == options.nick) return;
 
     var results;
     while (results = INCR.exec(msg)) {
@@ -152,6 +154,8 @@ bot.addListener('message', function (from, channel, msg) {
 });
 
 bot.addListener('message', function (from, channel, msg) {
+    if (channel == options.nick) return;
+
     var parts = msg.trim().split(/\s+/);
     if (parts.shift() != options.nick + ':') return;
     if (parts.shift() != 'karma') return;
@@ -178,6 +182,8 @@ bot.addListener('message', function (from, channel, msg) {
 });
 
 bot.addListener('message', function (from, channel, msg) {
+    if (channel == options.nick) return;
+
     var parts = msg.trim().split(/\s+/);
     if (parts.shift() != options.nick + ':') return;
     if (parts.shift() != 'seen') return;
@@ -189,6 +195,8 @@ bot.addListener('message', function (from, channel, msg) {
 });
 
 bot.addListener('message', function (from, channel, msg) {
+    if (channel == options.nick) return;
+
     var parts = msg.trim().split(/\s+/);
     if (parts.shift() != options.nick + ':') return;
     if (parts.shift() != 'zdrowie') return;
