@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var irc = require('irc');
-var bz = require('bz');
+var bz = require('bz-json');
 var redis = require('redis');
 
 var options = require('nomnom').opts({
@@ -27,7 +27,10 @@ for (var i = 0; i < channels.length; i++) {
 }
 
 var bmo = bz.createClient();
-var store = redis.createClient();
+var bap = bz.createClient({ 
+    url: "http://bugs.aviary.pl/xmlrpc.cgi"
+});
+var store = redis.createClient(8888);
 var bot = new irc.Client(options.host, options.nick, {
     'channels': channels,
 });
@@ -70,6 +73,23 @@ bot.addListener('message', function (from, channel, msg) {
                 status == 'VERIFIED')
                 status += ' ' + bug.resolution;
             bot.say(channel, from + ': http://bugzil.la/' + bug.id + 
+                    ' - ' + bug.summary + ' - ' + status);
+        });
+    }
+    while (results = BAP_RE.exec(msg)) {
+        var bugid = results[1];
+        if (uniques.indexOf(bugid) > -1) continue;
+        uniques.push(bugid);
+        bap.getBug(bugid, function(error, bug) {
+            if (error) {
+                console.log(error);
+                return;
+            }
+            var status = bug.status;
+            if (status == 'RESOLVED' ||
+                status == 'VERIFIED')
+                status += ' ' + bug.resolution;
+            bot.say(channel, from + ': http://bugs.aviary.pl/show_bug.cgi?id=' + bug.id +
                     ' - ' + bug.summary + ' - ' + status);
         });
     }
