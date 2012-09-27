@@ -60,6 +60,8 @@ bot.on('join', function(channel, nick) {
     if (nick == options.nick) {
         console.log('Connected!');
     }
+
+    store.set('nick_' + nick, true);
 });
 
 store.on("error", function (err) {
@@ -70,14 +72,24 @@ bot.addListener('error', function(err) {
     if (err.rawCommand != '421') console.log(err);
 });
 
+bot.addListener('names', function(channel, nicks) {
+    if (nicks) {
+        for (var nick in nicks) {
+            store.set('nick_' + nick, true);
+        }
+    }
+});
+
 bot.addListener('quit', function (channel, who, reason) {
     console.log(who + ' has left');
     store.set('quit_' + who, Date.now());
+    store.del('nick_' + who, null);
 });
 
 bot.addListener('part', function (channel, who, reason) {
     console.log(who + ' has left');
     store.set('quit_' + who, Date.now());
+    store.del('nick_' + who, null);
 });
 
 bot.addListener('message', function (from, channel, msg) {
@@ -188,9 +200,21 @@ bot.addListener('message', function (from, channel, msg) {
     if (parts.shift() != options.nick + ':') return;
     if (parts.shift() != 'seen') return;
     var who = parts.shift();
-    store.get('quit_' + who, function(err, res) {
-        var when = new Date(parseInt(res));
-        bot.say(channel, who + ' has left on ' + when.toString());
+    store.get('nick_' + who, function(err, res) {
+        if (res) {
+            bot.say(channel, who + ' jest w tej chwili na kanale');
+        }
+        else {
+            store.get('quit_' + who, function(err, res) {
+                if (res) {
+                    var when = new Date(parseInt(res));
+                    bot.say(channel, who + ' opuścił kanał ostatnio dnia ' + when.toString());
+                }
+                else {
+                    bot.say(channel, who + ' mnie jeszcze nie doił(a) :(');
+                }
+            });
+        }
     });
 });
 
